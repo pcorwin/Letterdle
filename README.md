@@ -49,11 +49,15 @@
     py -m http.server 8000
 
 3. **Access Game**
+
     Open browser and visit: 
+
     http://localhost:8000
 
 4. **File Structure**
+
     Ensure file directory contains:
+    
     letterdle/
     ├── index.html
     ├── words.txt
