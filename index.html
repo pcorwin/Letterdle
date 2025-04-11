@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+    <title>Letterdle</title>
+</head>
+<body>
+    <div class="game-container">
+        <div class="grid" id="grid"></div>
+        <div class="keyboard" id="keyboard"></div>
+    </div>
+    <script>        
+        let WORD_LIST = [];
+        let targetWord;
+
+        async function loadWordList() {
+            try {
+                const response = await fetch('words.txt');
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const text = await response.text();
+                const loadedWords = text.toUpperCase().split('\n')
+                    .map(word => word.trim())
+                    .filter(word => word.length === 5);
+                
+                if (loadedWords.length === 0) {
+                    throw new Error('Word list is empty or invalid');
+                }
+                
+                WORD_LIST = loadedWords;
+                console.log('Successfully loaded', WORD_LIST.length, 'words');
+                
+            } catch (error) {
+                console.error('Error loading word list:', error);
+                WORD_LIST = [
+                    'APPLE', 'BRAIN', 'CHAIR', 'DREAM', 'EARTH',
+                    'FRUIT', 'GRAPE', 'HONEY', 'IGLOO', 'JUICE'
+                ];
+                alert('Using default word list - check console for errors');
+            }
+        }
+
+        async function initGame() {
+            await loadWordList();
+            
+            targetWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+            
+            createGrid();
+            createKeyboard();
+            document.addEventListener('keydown', handlePhysicalKeyboard);
+        }
+
+        async function resetGame() {
+            gameActive = true;
+            currentGuess = [];
+            currentRow = 0;
+            targetWord = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+            
+            const rows = document.getElementsByClassName('row');
+            Array.from(rows).forEach(row => {
+                Array.from(row.children).forEach(tile => {
+                    tile.textContent = '';
+                    tile.className = 'tile';
+                });
+            });
+            
+            const keys = document.getElementsByClassName('key');
+            Array.from(keys).forEach(key => {
+                key.className = 'key';
+            });
+            document.addEventListener('keydown', handlePhysicalKeyboard);
+        }
+
+        const MAX_GUESSES = 6;
+        let currentGuess = [];
+        let currentRow = 0;
+
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            for (let i = 0; i < MAX_GUESSES; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < 5; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    row.appendChild(tile);
+                }
+                grid.appendChild(row);
+            }
+        }
+
+        function createGrid() {
+            const grid = document.getElementById('grid');
+            for (let i = 0; i < MAX_GUESSES; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                for (let j = 0; j < 5; j++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile';
+                    row.appendChild(tile);
+                }
+                grid.appendChild(row);
+            }
+        }
+
+        function createKeyboard() {
+            const keyboardLayout = [
+                ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
+                ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
+                ['Enter', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'Backspace']
+            ];
+            
+            const keyboard = document.getElementById('keyboard');
+            keyboardLayout.forEach(row => {
+                const keyboardRow = document.createElement('div');
+                keyboardRow.className = 'keyboard-row';
+                row.forEach(key => {
+                    const button = document.createElement('button');
+                    button.className = 'key';
+                    button.textContent = key;
+                    button.addEventListener('click', () => handleVirtualKeyboard(key));
+                    keyboardRow.appendChild(button);
+                });
+                keyboard.appendChild(keyboardRow);
+            });
+        }
+
+        function handlePhysicalKeyboard(e) {
+            if (e.key === 'Enter') handleSubmit();
+            else if (e.key === 'Backspace') handleBackspace();
+            else if (/^[A-Za-z]$/.test(e.key)) handleLetter(e.key.toUpperCase());
+        }
+
+        function handleVirtualKeyboard(key) {
+            if (key === 'Enter') handleSubmit();
+            else if (key === 'Backspace') handleBackspace();
+            else handleLetter(key);
+        }
+
+        function handleLetter(letter) {
+            if (currentGuess.length < 5 && currentRow < MAX_GUESSES) {
+                currentGuess.push(letter);
+                updateTiles();
+            }
+        }
+
+        function handleBackspace() {
+            if (currentGuess.length > 0) {
+                currentGuess.pop();
+                updateTiles();
+            }
+        }
+
+        function handleSubmit() {
+            if (currentGuess.length !== 5) return;
+            if (!WORD_LIST.includes(currentGuess.join(''))) {
+                alert('Not in word list!');
+                return;
+            }
+
+            const targetLetters = targetWord.split('');
+            const guess = [...currentGuess];
+            const row = document.getElementsByClassName('row')[currentRow];
+            
+            guess.forEach((letter, i) => {
+                if (letter === targetLetters[i]) {
+                    row.children[i].classList.add('correct');
+                    targetLetters[i] = null;
+                }
+            });
+
+            guess.forEach((letter, i) => {
+                if (!row.children[i].classList.contains('correct')) {
+                    const index = targetLetters.indexOf(letter);
+                    if (index !== -1) {
+                        row.children[i].classList.add('present');
+                        targetLetters[index] = null;
+                    } else {
+                        row.children[i].classList.add('absent');
+                    }
+                }
+            });
+
+            updateKeyboard(guess);
+
+            if (currentGuess.join('') === targetWord) {
+                setTimeout(() => {
+                    alert('Congratulations! You won!');
+                    gameActive = false;
+                    resetGame();
+                }, 100)
+            } else if (currentRow === MAX_GUESSES - 1) {
+                const lostWord = targetWord;
+                resetGame();
+                setTimeout(() => {
+                    alert(`Game over! The word was ${lostWord}`);
+                    gameActive = false;
+                }, 100)
+            } else {
+                currentRow++;
+                currentGuess = [];
+            }
+        }
+
+        function updateTiles() {
+            const row = document.getElementsByClassName('row')[currentRow];
+            Array.from(row.children).forEach((tile, i) => {
+                tile.textContent = currentGuess[i] || '';
+            });
+        }
+
+        function updateKeyboard() {
+            const keys = document.getElementsByClassName('key');
+            const keyStates = new Map();
+
+            for (let rowIndex = 0; rowIndex <= currentRow; rowIndex++) {
+                const row = document.getElementsByClassName('row')[rowIndex];
+                if (!row) continue;
+
+                Array.from(row.children).forEach(tile => {
+                    const letter = tile.textContent;
+                    const state = Array.from(tile.classList).find(c => 
+                        c === 'correct' || c === 'present' || c === 'absent'
+                    );
+
+                    if (state) {
+                        if (!keyStates.has(letter) || 
+                            (state === 'correct') ||
+                            (state === 'present' && keyStates.get(letter) !== 'correct')) {
+                            keyStates.set(letter, state);
+                        }
+                    }
+                });
+            }
+
+            Array.from(keys).forEach(key => {
+                const letter = key.textContent;
+                if (keyStates.has(letter)) {
+                    key.className = 'key ' + keyStates.get(letter);
+                }
+            });
+        }
+        function processGuessFeedback() {
+            const targetLetters = targetWord.split('');
+            const guess = [...currentGuess];
+            const row = document.getElementsByClassName('row')[currentRow];
+            
+            guess.forEach((letter, i) => {
+                if (letter === targetLetters[i]) {
+                    row.children[i].classList.add('correct');
+                    targetLetters[i] = null;
+                }
+            });
+
+            guess.forEach((letter, i) => {
+                if (!row.children[i].classList.contains('correct')) {
+                    const index = targetLetters.indexOf(letter);
+                    if (index !== -1) {
+                        row.children[i].classList.add('present');
+                        targetLetters[index] = null;
+                    } else {
+                        row.children[i].classList.add('absent');
+                    }
+                }
+            });
+        }
+
+        initGame();
+    </script>
+</body>
+</html>
