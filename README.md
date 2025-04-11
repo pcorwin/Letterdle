@@ -56,13 +56,9 @@
 
     Ensure file directory contains:
 
-    letterdle/
-
-    ├── index.html
-
-    ├── words.txt
-
-    └── styles.css (optional if using separate CSS)
+    - index.html
+    - words.txt
+    - styles.css (optional if using separate CSS)
 
 ### Customization
 
