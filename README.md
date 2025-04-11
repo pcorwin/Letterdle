@@ -64,16 +64,16 @@
 
 To modify the word list:
 
-Edit words.txt file
-Add one 5-letter word per line
-Save and refresh browser
+- Edit words.txt file
+- Add one 5-letter word per line
+- Save and refresh browser
 
 ### Technical Details
 
-Frontend: Vanilla JavaScript
-No backend/server storage
-All processing happens client-side
-Word list loaded locally from words.txt
+- Frontend: Vanilla JavaScript
+- No backend/server storage
+- All processing happens client-side
+- Word list loaded locally from words.txt
 
 ### License
 
@@ -82,5 +82,7 @@ MIT License - Free for personal/educational use. Commercial use prohibited. Orig
 ### Credits
 
 Inspired by Josh Wardle's Wordle
+
 Developed for educational purposes
+
 Dictionary from SGB Words (sample words)
